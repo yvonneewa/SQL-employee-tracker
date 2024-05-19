@@ -28,10 +28,10 @@ const inquirer = require("inquirer");
 const { Client } = require('pg');
 
 const client = new Client({
-  user: 'your_username',
+  user: 'postgres',
   host: 'localhost',
-  database: 'your_database_name',
-  password: 'your_password',
+  database: 'employeeTracker_db',
+  password: 'Bumblebee113',
   port: 5432,
 });
 
