@@ -1,5 +1,5 @@
 INSERT INTO department (name) VALUES
-('Sales'),
+('Sales')
 -- Insert departments
 INSERT INTO department (name) VALUES ('Marketing');
 INSERT INTO department (name) VALUES ('Lawyer');
@@ -13,7 +13,7 @@ INSERT INTO role (title, salary, department_id) VALUES
 ('Sales Representative', 400000, 1),
 ('Marketing Manager', 55000, 2),
 ('QA engineer', 800000, 1),
-('Sales Representative', 4500000, 1),
+('UI engineer', 4500000, 1),
 ('Finance', 66000, 2);
 
 -- Insert employees

@@ -30,7 +30,7 @@ const { Client } = require('pg');
 const client = new Client({
   user: 'postgres',
   host: 'localhost',
-  database: 'employeeTracker_db',
+  database: 'employeetracker_db',
   password: 'Bumblebee113',
   port: 5432,
 });
@@ -60,11 +60,11 @@ async function mainMenu() {
         'Add a role',
         'Add an employee',
         'Update an employee role',
-        'View Employees by department',
+        'View Employees by department', 
         'View department budget',
         'Delete department',
-        'delete role',
-        'delete employee',
+        'Delete role',
+        'Delete employee',
         'Exit'
       ]
     }
@@ -91,23 +91,23 @@ async function mainMenu() {
       case 'Add an employee':
         addAnEmployee();
         break;
-        case 'Update an employee role':
-          updateAnEmployee();
+      case 'Update an employee role':
+        updateAnEmployee();
         break;
-      case 'View employee by department':
+      case 'View Employees by department': // Ensure this matches the spelling in the choices array
         viewEmployeesByDepartment();
         break;
-        case 'View department budget':
-          viewDepartmentBudget();
+      case 'View department budget':
+        viewDepartmentBudget();
         break;
-        case 'Delete department':
-          deleteDepartment();
+      case 'Delete department':
+        deleteDepartment();
         break;
-        case 'Delete role':
-          deleteRole();
+      case 'Delete role':
+        deleteRole();
         break;
-        case 'Delete employee':
-          deleteEmployee();
+      case 'Delete employee':
+        deleteEmployee();
         break;
       case 'Exit':
         console.log('Exiting application...');
@@ -121,6 +121,7 @@ async function mainMenu() {
     console.error('Error occurred during prompt:', error);
   }
 }
+
 
 // Function to view all departments
 function viewAllDepartments() {
@@ -146,17 +147,19 @@ function viewAllRoles() {
   });
 }
 
-//function to view all employees
+
+// Function to view all employees
 function viewAllEmployees() {
-  client.query('SELECT * FROM employees', (error, results) => {
+  client.query('SELECT * FROM employee', (error, results) => {
     if (error) {
-      console.error('Error retrieving employees :', error);
+      console.error('Error retrieving employees:', error);
       return;
     }
     console.table(results.rows);
     mainMenu(); // Call main menu again to display options
   });
 }
+
 
 //function to add departmets
 async function addADepartment() {
@@ -202,12 +205,13 @@ async function addARole() {
       },
     ]);
 
+
     const query = {
       text: 'INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)',
       values: [roleInfo.title, roleInfo.salary, roleInfo.departmentId],
     };
 
-    await client.query(query);
+    await client.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [roleInfo.title, roleInfo.salary, roleInfo.departmentId]);
     console.log('Role added successfully!');
   } catch (error) {
     console.error('Error adding role:', error.message);
@@ -319,132 +323,143 @@ async function updateEmployeeManager() {
   mainMenu(); // Call main menu again to display options
 }
 
-  // funtion to view employee by department
-  async function viewEmployeesByDepartment() {
-    try {
-      const userInput = await inquirer.prompt({
-        type: 'input',
-        name: 'departmentId',
-        message: 'Enter the department ID to view employees:',
-      });
-  
-      const query = {
-        text: `SELECT * FROM employee WHERE department_id = $1`,
-        values: [userInput.departmentId],
-      };
-  
-      const result = await client.query(query);
-  
-      if (result.rows.length === 0) {
-        console.log('No employees found in the specified department.');
-      } else {
-        console.table(result.rows);
-      }
-    } catch (error) {
-      console.error('Error viewing employees by department:', error.message);
-    }
-  
-    mainMenu(); // Call main menu again to display options
-  }
-  
+// funtion to view employee by department
+async function viewEmployeesByDepartment() {
+  try {
+    const userInput = await inquirer.prompt({
+      type: 'input',
+      name: 'departmentId',
+      message: 'Enter the department ID to view employees:',
+    });
 
-  //funtion to view departments to budget
-  async function viewDepartmentBudget() {
-    try {
-      const userInput = await inquirer.prompt({
-        type: 'input',
-        name: 'departmentId',
-        message: 'Enter the department ID to view budget:',
-      });
-  
-      const query = {
-        text: `SELECT SUM(salary) AS total_budget FROM employee WHERE department_id = $1`,
-        values: [userInput.departmentId],
-      };
-  
-      const result = await client.query(query);
-      const totalBudget = result.rows[0].total_budget;
-  
-      console.log(`Total budget for the department: $${totalBudget}`);
-    } catch (error) {
-      console.error('Error viewing department budget:', error.message);
-    }
-  
-    mainMenu(); // Call main menu again to display options
-  }
-  
+    const query = {
+      text: `
+        SELECT e.id, e.first_name, e.last_name, r.title AS job_title, d.name AS department, r.salary, CONCAT(m.first_name, ' ', m.last_name) AS manager
+        FROM employee e
+        LEFT JOIN role r ON e.role_id = r.id
+        LEFT JOIN department d ON r.department_id = d.id
+        LEFT JOIN employee m ON e.manager_id = m.id
+        WHERE e.department_id = $1
+      `,
+      values: [userInput.departmentId],
+    };
 
-  //funtion to delete department 
-  async function deleteDepartment() {
-    try {
-      const userInput = await inquirer.prompt({
-        type: 'input',
-        name: 'departmentId',
-        message: 'Enter the department ID to delete:',
-      });
-  
-      const query = {
-        text: `DELETE FROM department WHERE id = $1`,
-        values: [userInput.departmentId],
-      };
-  
-      await client.query(query);
-      console.log('Department deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting department:', error.message);
-    }
-  
-    mainMenu(); // Call main menu again to display options
-  }
-  
+    const result = await client.query(query);
 
-  //function to delete role
-  async function deleteRole() {
-    try {
-      const userInput = await inquirer.prompt({
-        type: 'input',
-        name: 'roleId',
-        message: 'Enter the role ID to delete:',
-      });
-  
-      const query = {
-        text: `DELETE FROM role WHERE id = $1`,
-        values: [userInput.roleId],
-      };
-  
-      await client.query(query);
-      console.log('Role deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting role:', error.message);
+    if (result.rows.length === 0) {
+      console.log('No employees found in the specified department.');
+    } else {
+      console.table(result.rows);
     }
-  
-    mainMenu(); // Call main menu again to display options
+  } catch (error) {
+    console.error('Error viewing employees by department:', error.message);
   }
-  
 
-  //function to delete employees
-  async function deleteEmployee() {
-    try {
-      const userInput = await inquirer.prompt({
-        type: 'input',
-        name: 'employeeId',
-        message: 'Enter the employee ID to delete:',
-      });
-  
-      const query = {
-        text: `DELETE FROM employee WHERE id = $1`,
-        values: [userInput.employeeId],
-      };
-  
-      await client.query(query);
-      console.log('Employee deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting employee:', error.message);
-    }
-  
-    mainMenu(); // Call main menu again to display options
+  mainMenu(); // Call main menu again to display options
+}
+
+// Function to view department budget
+async function viewDepartmentBudget() {
+  try {
+    const userInput = await inquirer.prompt({
+      type: 'input',
+      name: 'departmentId',
+      message: 'Enter the department ID to view budget:',
+    });
+
+    const query = {
+      text: `
+        SELECT SUM(role.salary) AS total_budget 
+        FROM employee 
+        JOIN role ON employee.role_id = role.id 
+        WHERE role.department_id = $1
+      `,
+      values: [userInput.departmentId],
+    };
+
+    const result = await client.query(query);
+    const totalBudget = result.rows[0].total_budget;
+
+    console.log(`Total budget for the department: $${totalBudget}`);
+  } catch (error) {
+    console.error('Error viewing department budget:', error.message);
   }
-  
+
+  mainMenu(); // Call main menu again to display options
+}
+
+
+//funtion to delete department 
+async function deleteDepartment() {
+  try {
+    const userInput = await inquirer.prompt({
+      type: 'input',
+      name: 'departmentId',
+      message: 'Enter the department ID to delete:',
+    });
+
+    const query = {
+      text: `DELETE FROM department WHERE id = $1`,
+      values: [userInput.departmentId],
+    };
+
+    await client.query(query);
+    console.log('Department deleted successfully!');
+  } catch (error) {
+    console.error('Error deleting department:', error.message);
+  }
+
+  mainMenu(); // Call main menu again to display options
+}
+
+
+//function to delete role
+async function deleteRole() {
+  try {
+    const userInput = await inquirer.prompt({
+      type: 'input',
+      name: 'roleId',
+      message: 'Enter the role ID to delete:',
+    });
+
+    const query = {
+      text: `DELETE FROM role WHERE id = $1`,
+      values: [userInput.roleId],
+    };
+
+    await client.query(query);
+    console.log('Role deleted successfully!');
+  } catch (error) {
+    console.error('Error deleting role:', error.message);
+  }
+
+  mainMenu(); // Call main menu again to display options
+}
+
+
+//function to delete employees
+async function deleteEmployee() {
+  try {
+    const userInput = await inquirer.prompt({
+      type: 'input',
+      name: 'employeeId',
+      message: 'Enter the employee ID to delete:',
+    });
+
+    const query = {
+      text: `DELETE FROM employee WHERE id = $1`,
+      values: [userInput.employeeId],
+    };
+
+    await client.query(query);
+    console.log('Employee deleted successfully!');
+  } catch (error) {
+    console.error('Error deleting employee:', error.message);
+  }
+
+  mainMenu(); // Call main menu again to display options
+}
+
 
 // Main function to start the application
 async function startApp() {
