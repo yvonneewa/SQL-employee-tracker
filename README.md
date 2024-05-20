@@ -40,6 +40,9 @@ Contributions are welcome! If you find any bugs or have suggestions for improvem
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
+## Resources
+xpert, activites from previous classes
+
 ## links
 -https://icecreamapps.com/v/b9g9c23 part 1
 
