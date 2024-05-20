@@ -94,7 +94,7 @@ async function mainMenu() {
       case 'Update an employee role':
         updateAnEmployee();
         break;
-      case 'View Employees by department': // Ensure this matches the spelling in the choices array
+      case 'View Employees by department':
         viewEmployeesByDepartment();
         break;
       case 'View department budget':
@@ -184,7 +184,7 @@ async function addADepartment() {
   mainMenu(); // Call main menu again to display options
 }
 
-//funtion to add a role
+// Function to add a role
 async function addARole() {
   try {
     const roleInfo = await inquirer.prompt([
@@ -205,13 +205,26 @@ async function addARole() {
       },
     ]);
 
+    // Check if the provided department ID exists in the department table
+    const departmentCheckQuery = {
+      text: 'SELECT id FROM department WHERE id = $1',
+      values: [roleInfo.departmentId],
+    };
 
-    const query = {
+    const departmentCheckResult = await client.query(departmentCheckQuery);
+
+    if (departmentCheckResult.rows.length === 0) {
+      console.log('Error: The provided department ID does not exist.');
+      return;
+    }
+
+    // Proceed with adding the role
+    const insertQuery = {
       text: 'INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)',
       values: [roleInfo.title, roleInfo.salary, roleInfo.departmentId],
     };
 
-    await client.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)', [roleInfo.title, roleInfo.salary, roleInfo.departmentId]);
+    await client.query(insertQuery);
     console.log('Role added successfully!');
   } catch (error) {
     console.error('Error adding role:', error.message);
@@ -219,6 +232,7 @@ async function addARole() {
 
   mainMenu(); // Call main menu again to display options
 }
+
 
 
 // funtion to add an employee
